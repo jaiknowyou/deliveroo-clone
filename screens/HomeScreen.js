@@ -1,5 +1,5 @@
 import { View, Text, SafeAreaView, Image, TextInput, ScrollView} from 'react-native'
-import React, { useLayoutEffect } from 'react'
+import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import{
     UserIcon,
@@ -9,9 +9,24 @@ import{
 } from "react-native-heroicons/outline"
 import Categories from '../components/Categories'
 import FeaturedRow from '../components/FeaturedRow'
+import client from '../sanity'
 
 export default function HomeScreen() {
     const navigation = useNavigation()
+    const [featuredCategories, setFeaturedCategories] = useState([])
+
+    useEffect(()=>{
+        client.fetch(`*[_type=="featured"]{
+            ...,
+            restaurants[]->{
+              ...,
+              dishes[]->
+            }
+        }`).then(data =>{
+            setFeaturedCategories(data)
+        })
+    }, [])
+
 
     useLayoutEffect(()=>{
         navigation.setOptions({
@@ -55,23 +70,14 @@ export default function HomeScreen() {
             {/* {Categories} */}
             <Categories />
             {/* {Featured Row} */}
-            <FeaturedRow
-                id="1234"
-                title = "Featured"
-                description="Paid placements from partners"
-            />
-            {/* {Tasty Discounts} */}
-            <FeaturedRow
-                id="1234"
-                title = "Tasty Discounts"
-                description="10% Discount for all users"
-            />
-            {/* {Offers near you} */}
-            <FeaturedRow
-                id="1234"
-                title = "Offers near you"
-                description="Eat, Eat, Eat !!"
-            />
+            {featuredCategories?.map(category =>(
+                <FeaturedRow
+                    key = {category._id}
+                    id = {category._id}
+                    title={category.name}
+                    description={category.short_description}
+                />
+            ))}
         </ScrollView>
     </SafeAreaView>
   )
